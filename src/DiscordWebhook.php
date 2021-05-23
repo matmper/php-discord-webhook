@@ -21,9 +21,9 @@ class DiscordWebhook
      */
     public function __construct(
         string $webhook,
-        $webhookName = 'Bot Webhook',
-        $webhookEnv = 'Undefined Env',
-        $webhookProject = 'Undefined Project'
+        string $webhookName = 'Bot Webhook',
+        string $webhookEnv = 'Undefined Env',
+        string $webhookProject = 'Undefined Project'
     ) {
     	$this->webhook = $webhook;
 	    $this->webhookName = $webhookName;
@@ -38,8 +38,8 @@ class DiscordWebhook
      * @return bool
      */
 	public function send(
-		$message,
-		$type = false
+		string $message,
+		?string $type = null
 	): bool {
 	    switch ($type) {
 	        case 'success':
@@ -109,7 +109,7 @@ class DiscordWebhook
 	        ]
 	    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-	    return self::sendCurl($webhookData);
+	    return $this->sendCurl($webhookData);
 	}
 
     /**
