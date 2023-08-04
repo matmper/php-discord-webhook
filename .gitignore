@@ -3,3 +3,5 @@ composer.phar
 /vendor/
 /coverage/
 /logs/
+/tests/.env
+.env

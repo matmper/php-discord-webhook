@@ -1,150 +1,264 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Matmper;
 
 use Exception;
+use Matmper\Enums\MessageType;
+use Matmper\Exceptions\DiscordWebhookException;
+use Matmper\Exceptions\EnvironmentNotFoundException;
+use Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException;
 
 class DiscordWebhook
 {
-    private $webhook;
-    private $webhookName;
-    private $webhookEnv;
-    private $webhookProject;
+	/**
+	 * Message type
+	 *
+	 * @var array
+	 */
+	protected $type; // is of type array{name: string, color: string}
 
-    /**
-     * constructor
-     * @param string $appSecret
-     * @param string $context
-     * @param int $expire
-     * @param int $renew
-     * @return void
-     */
-    public function __construct(
-        string $webhook,
-        string $webhookName = 'Bot Webhook',
-        string $webhookEnv = 'Undefined Env',
-        string $webhookProject = 'Undefined Project'
-    ) {
-    	$this->webhook = $webhook;
-	    $this->webhookName = $webhookName;
-	    $this->webhookEnv = $webhookEnv;
-	    $this->webhookProject = $webhookProject;
+	/**
+	 * Set request message
+	 *
+	 * @var mixed
+	 */
+	protected $message = '';
+
+	/**
+	 * Application url
+	 *
+	 * @var string
+	 */
+	protected $appUrl;
+
+	/**
+	 * Webhook request payload
+	 *
+	 * @var array
+	 */
+	private $payload;
+
+	/**
+	 * Webhook discord full url
+	 *
+	 * @var string
+	 */
+	private $webhookUrl;
+
+    public function __construct()
+	{
+		$this->setClient();
+		$this->setAppUrl();
+    	$this->type(MessageType::DEFAULT);
     }
 
-    /**
-     * Send a webhook message to Discord Channel
-     * @param string $message your custom message
-     * @param string $type message type [success, danger, warning]
-     * @return bool
-     */
-	public function send(
-		string $message,
-		?string $type = null
-	): bool {
-	    switch ($type) {
-	        case 'success':
-	            $color = '2ecc71';
+	/**
+	 * Set a message type color (Default: #3498db)
+	 * Options: success, danger, warning
+	 *
+	 * @param MessageType::SUCCESS|MessageType::WARNING|MessageType::DANGER|MessageType::DEFAULT $type
+	 * @return self
+	 * @throws Exception
+	 */
+	public function type(string $type): self
+	{
+		switch ($type) {
+	        case MessageType::SUCCESS:
+	            $this->type = ['name' => MessageType::SUCCESS, 'color' => '2ecc71'];
 	        	break;
-	        case 'danger':
-	            $color = 'e74c3c';
+	        case MessageType::DANGER:
+	            $this->type = ['name' => MessageType::DANGER, 'color' => 'e74c3c'];
 	        	break;
-	        case 'warning':
-	            $color = 'f1c40f';
+	        case MessageType::WARNING:
+	            $this->type = ['name' => MessageType::WARNING, 'color' => 'f1c40f'];
 	        	break;
+			case MessageType::DEFAULT:
+				$this->type = ['name' => MessageType::DEFAULT, 'color' => '3498db'];
+				break;
 	        default:
-	            $color = '3498db';
-	        	break;
+	            throw new Exception('Discord Webhook: message type not found: ' . $type);
 	    }
 
-	    $message = (string) is_iterable($message) ? json_encode($message) : $message;
+		return $this;
+	}
 
-	    $webhookName = (string) $this->webhookName;
-	    $webhookEnv = (string) $this->webhookEnv;
-	    $webhookProject = (string) $this->webhookProject;
+	/**
+	 * Set message to send into webhook request
+	 *
+	 * @param mixed $message
+	 * @return self
+	 */
+	public function message($message): self
+	{
+		if (is_array($message) || is_object($message)) {
+			$this->message = json_encode($this->message);
+		} else {
+			$this->message = (string) $message;
+		}
 
-	    $webhookUrl = '';
-	    if (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST']) {
-	    	$webhookUrl .= $_SERVER['HTTP_HOST'];
-	    }
-	    if (isset($_SERVER['REQUEST_URI']) && $_SERVER['REQUEST_URI']) {
-	    	$webhookUrl .= $_SERVER['REQUEST_URI'];
-	    }
-	    if ($webhookUrl) {
-	    	$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://");
-	    	$webhookUrl = $protocol . $webhookUrl;
-	    }
+		return $this;
+	}
 
-	    $webhookData = json_encode([
-	        "username" => $webhookName,
-	        "tts" => false,
-	        "embeds" => [
+    /**
+     * Send a request to defined webhook
+     *
+     * @return object
+	 * @throws \Matmper\Exceptions\DiscordWebhookException
+     */
+	public function send(): object
+	{
+		try {
+			$this->setRequestPayload();
+
+			$curl = curl_init();
+
+			curl_setopt_array($curl, [
+				CURLOPT_URL => $this->webhookUrl,
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_ENCODING => '',
+				CURLOPT_MAXREDIRS => 10,
+				CURLOPT_TIMEOUT => $this->env('DISCORD_WEBHOOK_TIMEOUT', 5),
+				CURLOPT_FOLLOWLOCATION => true,
+				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+				CURLOPT_CUSTOMREQUEST => 'POST',
+				CURLOPT_POSTFIELDS => json_encode($this->payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+				CURLOPT_HTTPHEADER => [
+					'Content-Type: application/json',
+				],
+			]);
+
+			$response = curl_exec($curl);
+
+			curl_close($curl);
+
+			$response = json_decode($response);
+		} catch (\Throwable $th) {
+			throw new DiscordWebhookException($th->getMessage(), $th->getCode(), $th);
+		}
+		
+		return $response;
+	}
+
+	/**
+	 * Create a payload webhook request
+	 *
+	 * @return void
+	 */
+	private function setRequestPayload(): void
+	{
+		$this->payload = [
+	        'username' => $this->env('DISCORD_WEBHOOK_BOT_NAME', 'Webhook BOT'),
+	        'tts' => false,
+	        'embeds' => [
 	            [
-	                "description" => substr($message, 0, 2000),
-	                "color" => hexdec($color),
-	                "footer" => [
-	                    "text" => $webhookProject,
+	                'description' => substr($this->message, 0, 2000),
+	                'color' => hexdec($this->type['color']),
+	                'footer' => [
+	                    'text' => $this->env('APP_NAME', 'no application'),
 	                ],
-	                "author" => [
-	                    "name" => "Discord Webhook",
+	                'author' => [
+	                    'name' => 'Discord Webhook',
 	                ],
-	                "fields" => [
+	                'fields' => [
 	                    [
-	                        "name" => "Env",
-	                        "value" => $this->webhookEnv,
-	                        "inline" => true
+	                        'name' => 'env',
+	                        'value' => $this->env('APP_ENV', 'discord-webhook'),
+	                        'inline' => true
 	                    ],
 	                    [
-	                        "name" => "Date",
-	                        "value" => date('d/m/Y - H:i:s'),
-	                        "inline" => true
+	                        'name' => 'date',
+	                        'value' => date('d.m.Y \| H:i:sO'),
+	                        'inline' => true
 	                    ],
 	                    [
-	                        "name" => "Url",
-	                        "value" => $webhookUrl,
-	                        "inline" => false
+	                        'name' => 'origin',
+	                        'value' => $this->appUrl,
+	                        'inline' => false
 	                    ],
 	                ]
 
 	            ]
 	        ]
-	    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-	    return $this->sendCurl($webhookData);
+	    ];
 	}
 
-    /**
-     * Private function to send data webhook
-     * @param string $message your custom message
-     * @return bool
-     */
-	private function sendCurl(
-		string $webhookData
-	): bool {
-		$webhookUrl = $this->webhook;
+	/**
+	 * Define client to curl (webhook url)
+	 *
+	 * @return void
+	 * @throws \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException
+	 */
+	private function setClient(): void
+	{
+		$channel = $this->env('DISCORD_WEBHOOK_ID');
 
-		if (filter_var($webhookUrl, FILTER_VALIDATE_URL)) {
-		    $ch = curl_init();
-		    curl_setopt_array($ch, [
-		        CURLOPT_URL => $webhookUrl,
-		        CURLOPT_POST => true,
-		        CURLOPT_SSL_VERIFYHOST => false,
-		        CURLOPT_SSL_VERIFYPEER => false,
-		        CURLOPT_POSTFIELDS => $webhookData,
-		        CURLOPT_HTTPHEADER => [
-		            "Content-Type: application/json"
-		        ]
-		    ]);
-		    $response = curl_exec($ch);
-		    curl_close($ch);
-		    if ($response) {
-		    	return true;
-		    } else {
-		    	throw new Exception('Error to send webhook message', 500);
-		    }
-		} else {
-			throw new Exception('Your webhook url is invalid', 400);
+		if (empty($channel)) {
+			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_ID');
 		}
 
-		return false;
+		$token = $this->env('DISCORD_WEBHOOK_TOKEN');
+
+		if (empty($token)) {
+			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_TOKEN');
+		}
+
+		$host = $this->env('DISCORD_WEBHOOK_HOST', 'https://discord.com');
+
+		$this->webhookUrl = str_replace(
+			['{host}', '{channel}', '{token}'],
+			[$host, $channel, $token],
+			'{host}/api/webhooks/{channel}/{token}?wait=1'
+		);
+	}
+
+	/**
+	 * Set current application url
+	 *
+	 * @return void
+	 */
+	private function setAppUrl(): void
+	{
+		$appUrl = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
+	    $appUrl .= !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+	    $appUrl .= !empty($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+	    	
+	    $this->appUrl = $appUrl;
+	}
+
+	/**
+	 * Get environment variable value
+	 *
+	 * @param string $name
+	 * @param mixed $default
+	 * @return mixed
+	 * @throws \Matmper\Exceptions\EnvironmentNotFoundException
+	 */
+	private function env(string $name, $default = null)
+	{
+		try {
+			$env = !empty(getenv($name)) ? getenv($name) : null;
+			
+			if ($env) {
+				return $env;
+			}
+
+			$env = !empty($_ENV[$name]) ? $_ENV[$name] : null;
+	
+			if ($env) {
+				return $env;
+			}
+
+			$env = function_exists('env') ? env($name) : null; // or interface_exists()
+	
+			if ($env) {
+				return $env;
+			}
+		} catch (\Throwable $th) {
+			throw new EnvironmentNotFoundException($name, 404, $th);
+		}
+
+		return $default;
 	}
 }

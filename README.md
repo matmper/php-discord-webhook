@@ -1,51 +1,67 @@
 # PHP Discord Webhook
+
 Sample and cleand package to send messages to your discord channel. Easily!
 
+<img width="604" alt="image" src="https://github.com/matmper/php-discord-webhook/assets/8351960/08ffca66-82d4-466b-b41d-f1802502786e">
+
 # Dependences
-- PHP >= 7.1
+- PHP ^7.1 | ^8.0
 - Webhook Link ([Discord Doc](https://support.discord.com/hc/en-us/articles/228383668-Usando-Webhooks))
 
-# Install
+# Install & Usage
 
-Install this repository in your vendor path:
+Install this repository in with composer:
 
-```
-composer require matmper/php-discord-webhook
+```bash
+$ composer require matmper/php-discord-webhook
 ````
 
-# Usage
+Configure application envs values:
+```bash
+# REQUIRED (https://discord.com/api/webhooks/{ID}/{TOKEN})
+DISCORD_WEBHOOK_ID=
+DISCORD_WEBHOOK_TOKEN=
 
-First step is import the package in your project. Don't forget import you vendor path!
-```php
-use Matmper\DiscordWebhook;
+# OPTIONAL (DEFAULT VALUE)
+APP_NAME="no application"
+APP_ENV="undefined"
+DISCORD_WEBHOOK_BOT_NAME="Webhook BOT"
 ```
 
-Now you need call the function to send a message
+Sent a new message:
 ```php
-// Load DiscordWebhook Class
-$sendWebhook = new DiscordWebhook(
-	'https://discord.com/api/webhooks/XYZ/XYZXYZ',
-	'bot-name',
-	'env-name',
-	'project-name'
-);
-// Send a message
-$sendWebhook->send('your message', 'success');
+use Matmper\Enums\MessageType;
+
+$sendWebhook = new \Matmper\DiscordWebhook();
+
+// default message
+$sendWebhook->message('message')->send();
+
+// typed message
+$sendWebhook->type(MessageType::SUCCESS)->message('message')->send();
+$sendWebhook->type(MessageType::WARNING)->message('message')->send();
+$sendWebhook->type(MessageType::DANGER)->message('message')->send();
 ```
 
-**Tip:** If you are using a framework (Laravel, Lumen, CodeIgniter, others) you can create a helper function and put your webhook link and others attributes in your env/config file.
+To send type values, you can use the enum `Matmper\Enums\MessageType`.
+
+| Value | Enum | Color |
+|--|--|--|
+| success | MessageType::SUCCESS | #2ecc71 |
+| warning | MessageType::WARNING | #e74c3c |
+| danger | MessageType::DANGER | #f1c40f |
+| default | MessageType::DEFAULT | #3498db |
 
 ---
 
 ## Contribution & Development
 
-This is an open source code, free for distribution and contribution. All contributions will be accepted only with Pull Request and that pass the test and code standardization.
+This is an open source code, free for distribution and contribution.
+All contributions will be accepted only with Pull Request and that pass the test and code standardization.
 
-Run composer install in yout development env:
+Run composer install in yout development and create env file
+```bash
+$ composer install --dev --prefer-dist
+$ cp ./tests/.env.example .env
 ```
-composer install --dev --prefer-dist
-```
-
-Open ```./tests/DiscordWebhookTest.php``` and change **$webhook** var to your webhook url.
-
-Now you can use ```composer check``` in your terminal.
+Touch `./tests/.env` and configure envs values. Execute ```$ composer check```!
