@@ -7,7 +7,7 @@ namespace Matmper\Exceptions;
 use Exception;
 use Throwable;
 
-class DiscordWebhookException extends Exception
+class EnvironmentNotFoundException extends Exception
 {
     /**
      * @param string $message
@@ -16,9 +16,10 @@ class DiscordWebhookException extends Exception
      */
     public function __construct(
         string $message,
-        int $code = 0,
+        int $code = 404,
         Throwable $previous = null,
     ) {
-        parent::__construct($message, ($code ?: 500), $previous);
+        $message = "Error capturing environment variable value: {$message} (" . $previous->getMessage() . ")";
+        parent::__construct($message, ($code ?: 404), $previous);
     }
 }

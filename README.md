@@ -4,10 +4,9 @@ Sample and cleand package to send messages to your discord channel. Easily!
 
 # Dependences
 - PHP ^7.1 | ^8.0
-- Guzzle ^7.0.1
 - Webhook Link ([Discord Doc](https://support.discord.com/hc/en-us/articles/228383668-Usando-Webhooks))
 
-# Install && Usage
+# Install & Usage
 
 Install this repository in with composer:
 

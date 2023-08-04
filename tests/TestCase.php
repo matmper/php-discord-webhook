@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase as TestCaseParent;
 class TestCase extends TestCaseParent
 {
     /**
-     * @var Faker\Factory
+     * @var \Faker\Generator
      */
     protected $faker;
 
@@ -16,31 +16,22 @@ class TestCase extends TestCaseParent
      *
      * @return void
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
-        parent::setUp();
         $this->createApplication();
     }
 
     /**
-     * Tear down tests
-     *
-     * @return void
-     */
-    public function tearDown(): void
-    {
-        parent::tearDown();
-    }
-
-    /**
-     * @param Application $app
+     * Create test application
      * @return void
      */
     protected function createApplication(): void
     {
         $this->faker = \Faker\Factory::create();
 
-        if (file_exists($file = __DIR__ . DIRECTORY_SEPARATOR .  '.env')) {
+        $file = __DIR__ . DIRECTORY_SEPARATOR .  '.env';
+
+        if (file_exists($file)) {
             foreach (parse_ini_file($file) as $key => $value) {
                 putenv("{$key}={$value}");
             }

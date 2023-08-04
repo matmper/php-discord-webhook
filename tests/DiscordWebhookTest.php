@@ -8,6 +8,7 @@ use Matmper\Enums\MessageType;
 class DiscordWebhookTest extends TestCase
 {
     /**
+     * @test
      * @covers Matmper\DiscordWebhook::__construct
      * @covers Matmper\DiscordWebhook::type
      * @covers Matmper\DiscordWebhook::message
@@ -15,7 +16,7 @@ class DiscordWebhookTest extends TestCase
      */
     public function test_send_type_success()
     {
-        $sendWebhook = new DiscordWebhook(true);
+        $sendWebhook = new DiscordWebhook();
 
         $message = $this->faker->text(255);
         $send = $sendWebhook->type(MessageType::SUCCESS)->message($message)->send();

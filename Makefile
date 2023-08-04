@@ -7,8 +7,8 @@ composer-update:
 composer-tests:
 	composer tests
 
-code-check:
+composer-check:
 	composer check
 
-phpcbf:
+composer-phpcbf:
 	composer phpcbf

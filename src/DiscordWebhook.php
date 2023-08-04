@@ -7,12 +7,13 @@ namespace Matmper;
 use Exception;
 use Matmper\Enums\MessageType;
 use Matmper\Exceptions\DiscordWebhookException;
+use Matmper\Exceptions\EnvironmentNotFoundException;
 use Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException;
 
 class DiscordWebhook
 {
 	/**
-	 * Message type array params
+	 * Message type (success | warning | danger | default)
 	 *
 	 * @var array
 	 */
@@ -23,7 +24,7 @@ class DiscordWebhook
 	 *
 	 * @var string
 	 */
-	protected $message;
+	protected $message = '';
 
 	/**
 	 * Application url
@@ -33,13 +34,6 @@ class DiscordWebhook
 	protected $appUrl;
 
 	/**
-	 * Set secure request to curl option
-	 *
-	 * @var boolean
-	 */
-	protected $isSecureRequest = false;
-
-	/**
 	 * Webhook request payload
 	 *
 	 * @var array
@@ -47,7 +41,7 @@ class DiscordWebhook
 	private $payload;
 
 	/**
-	 * Webhook discord uri /api/.../123/abc
+	 * Webhook discord full url
 	 *
 	 * @var string
 	 */
@@ -85,7 +79,6 @@ class DiscordWebhook
 				break;
 	        default:
 	            throw new Exception('Discord Webhook: message type not found: ' . $type);
-				break;
 	    }
 
 		return $this;
@@ -109,10 +102,10 @@ class DiscordWebhook
 	}
 
     /**
-     * Send a webhook message to Discord Channel
+     * Send a request to defined webhook
      *
      * @return object
-	 * @throws DiscordWebhookException
+	 * @throws \Matmper\Exceptions\DiscordWebhookException
      */
 	public function send(): object
 	{
@@ -123,12 +116,10 @@ class DiscordWebhook
 
 			curl_setopt_array($curl, [
 				CURLOPT_URL => $this->webhookUrl,
-				CURLOPT_SSL_VERIFYHOST => $this->isSecureRequest,
-		        CURLOPT_SSL_VERIFYPEER => $this->isSecureRequest,
 				CURLOPT_RETURNTRANSFER => true,
 				CURLOPT_ENCODING => '',
 				CURLOPT_MAXREDIRS => 10,
-				CURLOPT_TIMEOUT => $this->env('APP_TIMEOUT', 5),
+				CURLOPT_TIMEOUT => $this->env('DISCORD_WEBHOOK_TIMEOUT', 5),
 				CURLOPT_FOLLOWLOCATION => true,
 				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 				CURLOPT_CUSTOMREQUEST => 'POST',
@@ -138,9 +129,11 @@ class DiscordWebhook
 				],
 			]);
 
-			$response = json_decode(curl_exec($curl));
+			$response = curl_exec($curl);
 
 			curl_close($curl);
+
+			$response = json_decode($response);
 		} catch (\Throwable $th) {
 			throw new DiscordWebhookException($th->getMessage(), $th->getCode(), $th);
 		}
@@ -192,18 +185,22 @@ class DiscordWebhook
 	}
 
 	/**
-	 * Define Guzzle Client
+	 * Define client to curl (webhook url)
 	 *
 	 * @return void
-	 * @throws EnvironmentVariableCannotBeEmptyException
+	 * @throws \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException
 	 */
 	private function setClient(): void
 	{
-		if (empty($channel = $this->env('DISCORD_WEBHOOK_ID'))) {
+		$channel = $this->env('DISCORD_WEBHOOK_ID');
+
+		if (empty($channel)) {
 			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_ID');
 		}
 
-		if (empty($token = $this->env('DISCORD_WEBHOOK_TOKEN'))) {
+		$token = $this->env('DISCORD_WEBHOOK_TOKEN');
+
+		if (empty($token)) {
 			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_TOKEN');
 		}
 
@@ -217,17 +214,13 @@ class DiscordWebhook
 	}
 
 	/**
-	 * Set application requested url
+	 * Set current application url
 	 *
 	 * @return void
 	 */
 	private function setAppUrl(): void
 	{
-		if (!empty($_SERVER['HTTPS'])) {
-			$this->isSecureRequest = true;
-		}
-
-		$appUrl = $this->isSecureRequest ? 'https://' : 'http://';
+		$appUrl = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
 	    $appUrl .= !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
 	    $appUrl .= !empty($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
 	    	
@@ -235,28 +228,37 @@ class DiscordWebhook
 	}
 
 	/**
-	 * Get env value
+	 * Get environment variable value
 	 *
 	 * @param string $name
 	 * @param mixed $default
-	 * @return void
+	 * @return mixed
+	 * @throws \Matmper\Exceptions\EnvironmentNotFoundException
 	 */
 	private function env(string $name, $default = null)
 	{
 		try {
-			if (!empty($env = getenv($name))) {
+			$env = !empty(getenv($name)) ? getenv($name) : null;
+			
+			if ($env) {
 				return $env;
 			}
+
+			$env = !empty($_ENV[$name]) ? $_ENV[$name] : null;
 	
-			if (!empty($env = $_ENV[$name])) {
+			if ($env) {
 				return $env;
 			}
+
+			$env = function_exists('env') ? env($name) : null;
 	
-			if (function_exists('env') && $env = env($name)) {
+			if ($env) {
 				return $env;
 			}
 		} catch (\Throwable $th) {
-			return $default;
+			throw new EnvironmentNotFoundException($name, 404, $th);
 		}
+
+		return $default;
 	}
 }
