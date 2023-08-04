@@ -13,16 +13,16 @@ use Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException;
 class DiscordWebhook
 {
 	/**
-	 * Message type (success | warning | danger | default)
+	 * Message type
 	 *
 	 * @var array
 	 */
-	protected $type;
+	protected $type; // is of type array{name: string, color: string}
 
 	/**
 	 * Set request message
 	 *
-	 * @var string
+	 * @var mixed
 	 */
 	protected $message = '';
 
@@ -58,13 +58,13 @@ class DiscordWebhook
 	 * Set a message type color (Default: #3498db)
 	 * Options: success, danger, warning
 	 *
-	 * @param string $type
+	 * @param MessageType::SUCCESS|MessageType::WARNING|MessageType::DANGER|MessageType::DEFAULT $type
 	 * @return self
 	 * @throws Exception
 	 */
 	public function type(string $type): self
 	{
-		switch (strtolower($type)) {
+		switch ($type) {
 	        case MessageType::SUCCESS:
 	            $this->type = ['name' => MessageType::SUCCESS, 'color' => '2ecc71'];
 	        	break;
@@ -250,7 +250,7 @@ class DiscordWebhook
 				return $env;
 			}
 
-			$env = function_exists('env') ? env($name) : null;
+			$env = function_exists('env') ? env($name) : null; // or interface_exists()
 	
 			if ($env) {
 				return $env;

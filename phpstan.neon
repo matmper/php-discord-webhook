@@ -8,4 +8,4 @@ parameters:
         - ./vendor/
         - ./tests/Unit/
 
-    level: 4
+    level: 5
