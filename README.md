@@ -2,6 +2,8 @@
 
 Sample and cleand package to send messages to your discord channel. Easily!
 
+<img width="604" alt="image" src="https://github.com/matmper/php-discord-webhook/assets/8351960/08ffca66-82d4-466b-b41d-f1802502786e">
+
 # Dependences
 - PHP ^7.1 | ^8.0
 - Webhook Link ([Discord Doc](https://support.discord.com/hc/en-us/articles/228383668-Usando-Webhooks))
