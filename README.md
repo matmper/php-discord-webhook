@@ -17,6 +17,9 @@ $ composer require matmper/php-discord-webhook
 ````
 
 Configure application envs values:
+
+*Applications without env files support, we recommend [using version 1.x](https://github.com/matmper/php-discord-webhook/tree/1.1.0)*
+
 ```bash
 # REQUIRED (https://discord.com/api/webhooks/{ID}/{TOKEN})
 DISCORD_WEBHOOK_ID=
@@ -64,4 +67,4 @@ Run composer install in yout development and create env file
 $ composer install --dev --prefer-dist
 $ cp ./tests/.env.example .env
 ```
-Touch `./tests/.env` and configure envs values. Execute ```$ composer check```!
+Edit `./tests/.env` and configure envs values. Execute ```$ composer check```.
