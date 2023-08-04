@@ -1,31 +1,27 @@
 <?php declare(strict_types=1);
 
+namespace Tests;
+
 use Matmper\DiscordWebhook;
-use PHPUnit\Framework\TestCase;
+use Matmper\Enums\MessageType;
 
 class DiscordWebhookTest extends TestCase
 {
-    private $webhook = 'https://discord.com/api/webhooks/123/1234';
-    private $webhookName = 'Test Bot';
-    private $webhookEnv = 'testing';
-    private $webhookProject = 'php-dicord-webhook';
-
     /**
-     * @covers Matmper\DiscordWebpshook::__construct
+     * @covers Matmper\DiscordWebhook::__construct
+     * @covers Matmper\DiscordWebhook::type
+     * @covers Matmper\DiscordWebhook::message
      * @covers Matmper\DiscordWebhook::send
      */
-    public function testSend()
+    public function test_send_type_success()
     {
-        $sendWebhook = new DiscordWebhook(
-            $this->webhook,
-            $this->webhookName,
-            $this->webhookEnv,
-            $this->webhookProject
-        );
+        $sendWebhook = new DiscordWebhook(true);
 
-        $send = $sendWebhook->send('This is a test message', 'success');
-
-        $this->assertNotNull($send);
-        $this->assertTrue($send);
+        $message = $this->faker->text(255);
+        $send = $sendWebhook->type(MessageType::SUCCESS)->message($message)->send();
+        
+        $this->assertNotEmpty($send);
+        $this->assertGreaterThan(0, $send->id);
+        $this->assertGreaterThan(0, $send->webhook_id);
     }
 }

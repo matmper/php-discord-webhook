@@ -1,0 +1,11 @@
+parameters:
+
+    paths:
+        - ./src/
+        - ./tests/
+
+    excludePaths:
+        - ./vendor/
+        - ./tests/Unit/
+
+    level: 4
