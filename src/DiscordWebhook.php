@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace Matmper;
 
-use Exception;
 use Matmper\Contracts\Webhook;
 use Matmper\Enums\MessageType;
-use Matmper\Exceptions\DiscordWebhookException;
-use Matmper\Exceptions\EnvironmentNotFoundException;
-use Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException;
-use Matmper\Services\HttpClient;
 
 class DiscordWebhook implements Webhook
 {
@@ -63,7 +58,7 @@ class DiscordWebhook implements Webhook
 	 *
 	 * @param MessageType::SUCCESS|MessageType::WARNING|MessageType::DANGER|MessageType::DEFAULT $type
 	 * @return self
-	 * @throws Exception
+	 * @throws \Matmper\Exceptions\MessageTypeNotFoundException
 	 */
 	public function type(string $type): self
 	{
@@ -81,7 +76,7 @@ class DiscordWebhook implements Webhook
 				$this->type = ['name' => MessageType::DEFAULT, 'color' => '3498db'];
 				break;
 	        default:
-	            throw new Exception('Discord Webhook: message type not found: ' . $type);
+	            throw new \Matmper\Exceptions\MessageTypeNotFoundException("{$type}");
 	    }
 
 		return $this;
@@ -113,7 +108,7 @@ class DiscordWebhook implements Webhook
 		try {
 			$this->setRequestPayload();
 
-			$curl = new HttpClient($this->webhookUrl);
+			$curl = new \Matmper\Services\HttpClient($this->webhookUrl);
 
 			$curl->setopt(CURLOPT_RETURNTRANSFER, true);
 			$curl->setopt(CURLOPT_ENCODING, '');
@@ -128,7 +123,7 @@ class DiscordWebhook implements Webhook
 			$response = $curl->execute();
 			$response = json_decode($response);
 		} catch (\Throwable $th) {
-			throw new DiscordWebhookException($th->getMessage(), $th->getCode(), $th);
+			throw new \Matmper\Exceptions\DiscordWebhookException($th->getMessage(), $th->getCode(), $th);
 		}
 		
 		return $response;
@@ -188,13 +183,13 @@ class DiscordWebhook implements Webhook
 		$channel = $this->env('DISCORD_WEBHOOK_ID');
 
 		if (empty($channel)) {
-			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_ID');
+			throw new \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_ID');
 		}
 
 		$token = $this->env('DISCORD_WEBHOOK_TOKEN');
 
 		if (empty($token)) {
-			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_TOKEN');
+			throw new \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_TOKEN');
 		}
 
 		$host = $this->env('DISCORD_WEBHOOK_HOST', 'https://discord.com');
@@ -249,7 +244,7 @@ class DiscordWebhook implements Webhook
 				return $env;
 			}
 		} catch (\Throwable $th) {
-			throw new EnvironmentNotFoundException($name, 404, $th);
+			throw new \Matmper\Exceptions\EnvironmentNotFoundException($name, 404, $th);
 		}
 
 		return $default;
