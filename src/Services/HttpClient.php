@@ -50,7 +50,7 @@ class HttpClient implements HttpRequest
      */
     public function setopt(int $option, $value): void
     {
-       curl_setopt($this->curl, $option, $value);
+        curl_setopt($this->curl, $option, $value);
     }
 
     /**

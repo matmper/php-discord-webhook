@@ -21,7 +21,7 @@ class EnumTest extends TestCase
     /**
      * Provider
      *
-     * @return araay
+     * @return array
      */
     public static function messageTypeEnumProvider(): array
     {
