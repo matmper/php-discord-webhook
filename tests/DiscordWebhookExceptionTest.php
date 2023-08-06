@@ -8,6 +8,20 @@ class DiscordWebhookExceptionTest extends TestCase
 {
     /**
      * @test
+     * @covers \Matmper\Exceptions\MessageTypeNotFoundException
+     * @covers Matmper\DiscordWebhook::__construct
+     * @covers Matmper\DiscordWebhook::type
+     */
+    public function test_discord_webhook_message_type_not_found_exception()
+    {
+        $this->expectException(\Matmper\Exceptions\MessageTypeNotFoundException::class);
+
+        $sendWebhook = new DiscordWebhook();
+        $sendWebhook->type($this->faker->word());
+    }
+
+    /**
+     * @test
      * @covers \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException
      * @covers Matmper\DiscordWebhook::__construct
      */

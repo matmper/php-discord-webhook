@@ -5,3 +5,4 @@ composer.phar
 /logs/
 /tests/.env
 .env
+.DS_Store

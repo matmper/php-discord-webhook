@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Matmper;
 
-use Exception;
+use Matmper\Contracts\Webhook;
 use Matmper\Enums\MessageType;
-use Matmper\Exceptions\DiscordWebhookException;
-use Matmper\Exceptions\EnvironmentNotFoundException;
-use Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException;
+use Matmper\Services\HttpClient;
 
-class DiscordWebhook
+class DiscordWebhook implements Webhook
 {
 	/**
 	 * Message type
@@ -36,7 +34,7 @@ class DiscordWebhook
 	/**
 	 * Webhook request payload
 	 *
-	 * @var array
+	 * @var string
 	 */
 	private $payload;
 
@@ -51,6 +49,7 @@ class DiscordWebhook
 	{
 		$this->setClient();
 		$this->setAppUrl();
+
     	$this->type(MessageType::DEFAULT);
     }
 
@@ -60,7 +59,7 @@ class DiscordWebhook
 	 *
 	 * @param MessageType::SUCCESS|MessageType::WARNING|MessageType::DANGER|MessageType::DEFAULT $type
 	 * @return self
-	 * @throws Exception
+	 * @throws \Matmper\Exceptions\MessageTypeNotFoundException
 	 */
 	public function type(string $type): self
 	{
@@ -78,7 +77,7 @@ class DiscordWebhook
 				$this->type = ['name' => MessageType::DEFAULT, 'color' => '3498db'];
 				break;
 	        default:
-	            throw new Exception('Discord Webhook: message type not found: ' . $type);
+	            throw new \Matmper\Exceptions\MessageTypeNotFoundException("{$type}", HttpClient::HTTP_NOT_FOUND);
 	    }
 
 		return $this;
@@ -92,17 +91,15 @@ class DiscordWebhook
 	 */
 	public function message($message): self
 	{
-		if (is_array($message) || is_object($message)) {
-			$this->message = json_encode($this->message);
-		} else {
-			$this->message = (string) $message;
-		}
+		$this->message = is_array($message) || is_object($message)
+			? json_encode($this->message)
+			: (string) $message;
 
 		return $this;
 	}
 
     /**
-     * Send a request to defined webhook
+     * Send a new webhook message request
      *
      * @return object
 	 * @throws \Matmper\Exceptions\DiscordWebhookException
@@ -112,43 +109,35 @@ class DiscordWebhook
 		try {
 			$this->setRequestPayload();
 
-			$curl = curl_init();
+			$curl = new HttpClient($this->webhookUrl);
 
-			curl_setopt_array($curl, [
-				CURLOPT_URL => $this->webhookUrl,
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_ENCODING => '',
-				CURLOPT_MAXREDIRS => 10,
-				CURLOPT_TIMEOUT => $this->env('DISCORD_WEBHOOK_TIMEOUT', 5),
-				CURLOPT_FOLLOWLOCATION => true,
-				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-				CURLOPT_CUSTOMREQUEST => 'POST',
-				CURLOPT_POSTFIELDS => json_encode($this->payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-				CURLOPT_HTTPHEADER => [
-					'Content-Type: application/json',
-				],
-			]);
+			$curl->setopt(CURLOPT_RETURNTRANSFER, true);
+			$curl->setopt(CURLOPT_ENCODING, '');
+			$curl->setopt(CURLOPT_MAXREDIRS, 3);
+			$curl->setopt(CURLOPT_TIMEOUT, $this->env('DISCORD_WEBHOOK_TIMEOUT', 5));
+			$curl->setopt(CURLOPT_FOLLOWLOCATION, true);
+			$curl->setopt(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+			$curl->setopt(CURLOPT_CUSTOMREQUEST, 'POST');
+			$curl->setopt(CURLOPT_POSTFIELDS, $this->payload);
+			$curl->setopt(CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 
-			$response = curl_exec($curl);
-
-			curl_close($curl);
-
+			$response = $curl->execute();
 			$response = json_decode($response);
 		} catch (\Throwable $th) {
-			throw new DiscordWebhookException($th->getMessage(), $th->getCode(), $th);
+			throw new \Matmper\Exceptions\DiscordWebhookException($th->getMessage(), $th->getCode(), $th);
 		}
 		
 		return $response;
 	}
 
 	/**
-	 * Create a payload webhook request
+	 * Create a json payload webhook request
 	 *
 	 * @return void
 	 */
 	private function setRequestPayload(): void
 	{
-		$this->payload = [
+		$this->payload = json_encode([
 	        'username' => $this->env('DISCORD_WEBHOOK_BOT_NAME', 'Webhook BOT'),
 	        'tts' => false,
 	        'embeds' => [
@@ -181,7 +170,7 @@ class DiscordWebhook
 
 	            ]
 	        ]
-	    ];
+	    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 	}
 
 	/**
@@ -195,13 +184,13 @@ class DiscordWebhook
 		$channel = $this->env('DISCORD_WEBHOOK_ID');
 
 		if (empty($channel)) {
-			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_ID');
+			throw new \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_ID');
 		}
 
 		$token = $this->env('DISCORD_WEBHOOK_TOKEN');
 
 		if (empty($token)) {
-			throw new EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_TOKEN');
+			throw new \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_TOKEN');
 		}
 
 		$host = $this->env('DISCORD_WEBHOOK_HOST', 'https://discord.com');
@@ -256,7 +245,7 @@ class DiscordWebhook
 				return $env;
 			}
 		} catch (\Throwable $th) {
-			throw new EnvironmentNotFoundException($name, 404, $th);
+			throw new \Matmper\Exceptions\EnvironmentNotFoundException($name, HttpClient::HTTP_NOT_FOUND, $th);
 		}
 
 		return $default;
