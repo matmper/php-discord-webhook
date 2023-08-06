@@ -42,9 +42,9 @@ jobs:
 
     - name: Run PHP Unit Tests suite
       env:
-        APP_NAME: ${{ env.APP_NAME }}
-        APP_ENV: ${{ env.APP_ENV }}
+        APP_NAME: ${{ vars.APP_NAME }}
+        APP_ENV: ${{ vars.APP_ENV }}
         DISCORD_WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
         DISCORD_WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-        DISCORD_WEBHOOK_BOT_NAME: ${{ env.DISCORD_WEBHOOK_BOT_NAME }}
+        DISCORD_WEBHOOK_BOT_NAME: ${{ vars.DISCORD_WEBHOOK_BOT_NAME }}
       run: composer tests
