@@ -10,6 +10,8 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
 
+    environment: testing
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -40,9 +42,9 @@ jobs:
 
     - name: Run PHP Unit Tests suite
       env:
-        APP_NAME: matmper/php-discord-webhook
-        APP_ENV: testing
+        APP_NAME: ${{ env.APP_NAME }}
+        APP_ENV: ${{ env.APP_ENV }}
         DISCORD_WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
         DISCORD_WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-        DISCORD_WEBHOOK_BOT_NAME: 'Testing Bot'
+        DISCORD_WEBHOOK_BOT_NAME: ${{ env.DISCORD_WEBHOOK_BOT_NAME }}
       run: composer tests

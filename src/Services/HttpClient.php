@@ -4,7 +4,7 @@ namespace Matmper\Services;
 
 use Matmper\Contracts\HttpRequest;
 
-final class HttpClient implements HttpRequest
+class HttpClient implements HttpRequest
 {
     /**
      * HTTP Code Response 300
@@ -17,6 +17,12 @@ final class HttpClient implements HttpRequest
      * @var integer
      */
     const HTTP_NO_CONTENT = 204;
+
+    /**
+     * HTTP Code Response 404
+     * @var integer
+     */
+    const HTTP_NOT_FOUND = 404;
 
     /**
      * Store curl handle

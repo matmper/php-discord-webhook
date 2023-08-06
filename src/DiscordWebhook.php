@@ -6,6 +6,7 @@ namespace Matmper;
 
 use Matmper\Contracts\Webhook;
 use Matmper\Enums\MessageType;
+use Matmper\Services\HttpClient;
 
 class DiscordWebhook implements Webhook
 {
@@ -76,7 +77,7 @@ class DiscordWebhook implements Webhook
 				$this->type = ['name' => MessageType::DEFAULT, 'color' => '3498db'];
 				break;
 	        default:
-	            throw new \Matmper\Exceptions\MessageTypeNotFoundException("{$type}");
+	            throw new \Matmper\Exceptions\MessageTypeNotFoundException("{$type}", HttpClient::HTTP_NOT_FOUND);
 	    }
 
 		return $this;
@@ -108,7 +109,7 @@ class DiscordWebhook implements Webhook
 		try {
 			$this->setRequestPayload();
 
-			$curl = new \Matmper\Services\HttpClient($this->webhookUrl);
+			$curl = new HttpClient($this->webhookUrl);
 
 			$curl->setopt(CURLOPT_RETURNTRANSFER, true);
 			$curl->setopt(CURLOPT_ENCODING, '');
@@ -244,7 +245,7 @@ class DiscordWebhook implements Webhook
 				return $env;
 			}
 		} catch (\Throwable $th) {
-			throw new \Matmper\Exceptions\EnvironmentNotFoundException($name, 404, $th);
+			throw new \Matmper\Exceptions\EnvironmentNotFoundException($name, HttpClient::HTTP_NOT_FOUND, $th);
 		}
 
 		return $default;

@@ -23,7 +23,7 @@ class EnumTest extends TestCase
      *
      * @return araay
      */
-    private function messageTypeEnumProvider(): array
+    public static function messageTypeEnumProvider(): array
     {
         return [
             [MessageType::SUCCESS],
