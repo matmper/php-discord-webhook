@@ -92,7 +92,7 @@ class DiscordWebhook implements Webhook
 	public function message($message): self
 	{
 		$this->message = is_array($message) || is_object($message)
-			? json_encode($this->message)
+			? json_encode($message)
 			: (string) $message;
 
 		return $this;
@@ -126,7 +126,7 @@ class DiscordWebhook implements Webhook
 		} catch (\Throwable $th) {
 			throw new \Matmper\Exceptions\DiscordWebhookException($th->getMessage(), $th->getCode(), $th);
 		}
-		
+
 		return $response;
 	}
 
@@ -212,7 +212,7 @@ class DiscordWebhook implements Webhook
 		$appUrl = !empty($_SERVER['HTTPS']) ? 'https://' : 'http://';
 	    $appUrl .= !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
 	    $appUrl .= !empty($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
-	    	
+
 	    $this->appUrl = $appUrl;
 	}
 
@@ -228,19 +228,19 @@ class DiscordWebhook implements Webhook
 	{
 		try {
 			$env = !empty(getenv($name)) ? getenv($name) : null;
-			
+
 			if ($env) {
 				return $env;
 			}
 
 			$env = !empty($_ENV[$name]) ? $_ENV[$name] : null;
-	
+
 			if ($env) {
 				return $env;
 			}
 
 			$env = function_exists('env') ? env($name) : null; // or interface_exists()
-	
+
 			if ($env) {
 				return $env;
 			}
