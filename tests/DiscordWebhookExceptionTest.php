@@ -12,7 +12,7 @@ class DiscordWebhookExceptionTest extends TestCase
      * @covers Matmper\DiscordWebhook::__construct
      * @covers Matmper\DiscordWebhook::type
      */
-    public function test_discord_webhook_message_type_not_found_exception()
+    public function test_discord_webhook_message_type_not_found_exception(): void
     {
         $this->expectException(\Matmper\Exceptions\MessageTypeNotFoundException::class);
 
@@ -25,7 +25,7 @@ class DiscordWebhookExceptionTest extends TestCase
      * @covers \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException
      * @covers Matmper\DiscordWebhook::__construct
      */
-    public function test_environment_variable_cannot_be_empty_exception()
+    public function test_environment_variable_cannot_be_empty_exception(): void
     {
         $env = getenv('DISCORD_WEBHOOK_ID');
         putenv('DISCORD_WEBHOOK_ID=');
@@ -48,7 +48,7 @@ class DiscordWebhookExceptionTest extends TestCase
      * @covers Matmper\DiscordWebhook::message
      * @covers Matmper\DiscordWebhook::send
      */
-    public function test_discord_webhook_exception()
+    public function test_discord_webhook_exception(): void
     {
         $env = getenv('DISCORD_WEBHOOK_HOST');
         putenv('DISCORD_WEBHOOK_HOST=WRONG');

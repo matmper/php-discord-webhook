@@ -39,9 +39,13 @@
             "@phpstan",
             "@tests"
         ],
-        "tests": "@php vendor/bin/phpunit  -d memory_limit=256M --configuration phpunit.xml",
-        "phpcs": "@php vendor/bin/phpcs",
         "phpcbf": "@php vendor/bin/phpcbf",
-        "phpstan": "@php vendor/bin/phpstan analyse --memory-limit 256M"
+        "phpcs": "@php vendor/bin/phpcs",
+        "phpstan": "@php vendor/bin/phpstan analyse --configuration phpstan.neon",
+        "tests": "@php vendor/bin/phpunit  -d memory_limit=256M --configuration phpunit.xml",
+        "post-install-cmd": [
+            "git config --local core.hooksPath .github/hooks",
+            "chmod +x .github/hooks/*"
+        ]
     }
 }

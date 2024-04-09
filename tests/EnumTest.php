@@ -11,7 +11,7 @@ class EnumTest extends TestCase
      * @covers Enums\MessageType
      * @dataProvider messageTypeEnumProvider
      */
-    public function test_message_type_enum(string $type)
+    public function test_message_type_enum(string $type): void
     {
         $type = strtoupper($type);
         $constant = !empty(constant("\Matmper\Enums\MessageType::{$type}"));
@@ -21,7 +21,7 @@ class EnumTest extends TestCase
     /**
      * Provider
      *
-     * @return array
+     * @return array<string[]>
      */
     public static function messageTypeEnumProvider(): array
     {

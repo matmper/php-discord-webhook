@@ -13,7 +13,7 @@ class DiscordWebhook implements Webhook
 	/**
 	 * Message type
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	protected $type; // is of type array{name: string, color: string}
 
@@ -137,7 +137,7 @@ class DiscordWebhook implements Webhook
 	 */
 	private function setRequestPayload(): void
 	{
-		$this->payload = json_encode([
+		$this->payload = (string) json_encode([
 	        'username' => $this->env('DISCORD_WEBHOOK_BOT_NAME', 'Webhook BOT'),
 	        'tts' => false,
 	        'embeds' => [
