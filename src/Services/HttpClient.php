@@ -61,7 +61,7 @@ class HttpClient implements HttpRequest
     public function execute(): string
     {
         try {
-            $response = curl_exec($this->curl);
+            $response = (string) curl_exec($this->curl);
             $responseCode = (int) curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
             curl_close($this->curl);

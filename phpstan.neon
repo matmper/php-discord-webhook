@@ -4,8 +4,4 @@ parameters:
         - ./src/
         - ./tests/
 
-    excludePaths:
-        - ./vendor/
-        - ./tests/Unit/
-
-    level: 5
+    level: 6
