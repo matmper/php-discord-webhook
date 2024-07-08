@@ -45,9 +45,9 @@ class DiscordWebhook implements Webhook
 	 */
 	private $webhookUrl;
 
-    public function __construct(string $channel = '', string $token = '')
+    public function __construct(string $id = '', string $token = '')
     {
-		$this->setClient($channel, $token);
+		$this->setClient($id, $token);
 
 		$this->setAppUrl();
 
@@ -177,16 +177,16 @@ class DiscordWebhook implements Webhook
     /**
      * Define client to curl (webhook url)
      *
-     * @param string $channel
+     * @param string $id
      * @param string $token
 	 * @return void
 	 * @throws \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException
      */
-	private function setClient(string $channel, string $token): void
+	private function setClient(string $id, string $token): void
 	{
-		$channel = !empty($channel) ? $channel : $this->env('DISCORD_WEBHOOK_ID');
+		$id = !empty($id) ? $id : $this->env('DISCORD_WEBHOOK_ID');
 
-		if (empty($channel)) {
+		if (empty($id)) {
 			throw new \Matmper\Exceptions\EnvironmentVariableCannotBeEmptyException('DISCORD_WEBHOOK_ID');
 		}
 
@@ -199,9 +199,9 @@ class DiscordWebhook implements Webhook
 		$host = $this->env('DISCORD_WEBHOOK_HOST', 'https://discord.com');
 
 		$this->webhookUrl = str_replace(
-			['{host}', '{channel}', '{token}'],
-			[$host, $channel, $token],
-			'{host}/api/webhooks/{channel}/{token}?wait=1'
+			['{host}', '{id}', '{token}'],
+			[$host, $id, $token],
+			'{host}/api/webhooks/{id}/{token}?wait=1'
 		);
 	}
 

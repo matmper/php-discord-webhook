@@ -31,22 +31,25 @@ APP_ENV="undefined"
 DISCORD_WEBHOOK_BOT_NAME="Webhook BOT"
 ```
 
-Sent a new message:
+Send a message:
+```php
+$sendWebhook = new \Matmper\DiscordWebhook();
+$sendWebhook->message('message')->send();
+```
+
+Set custom Discord ID and Token and send a message:
+```php
+$sendWebhook = new \Matmper\DiscordWebhook('DISCORD_ID', 'DISCORD_TOKEN');
+$sendWebhook->message('message')->send();
+```
+
+Send a typed message:
 ```php
 use Matmper\Enums\MessageType;
-
-$sendWebhook = new \Matmper\DiscordWebhook();
-
-// default message
-$sendWebhook->message('message')->send();
-
-// typed message
 $sendWebhook->type(MessageType::SUCCESS)->message('message')->send();
 $sendWebhook->type(MessageType::WARNING)->message('message')->send();
 $sendWebhook->type(MessageType::DANGER)->message('message')->send();
 ```
-
-To send type values, you can use the enum `Matmper\Enums\MessageType`.
 
 | Value | Enum | Color |
 |--|--|--|
